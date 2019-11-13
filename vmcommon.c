@@ -92,7 +92,7 @@ void yatc_context_migrate(YatcVariable** c1, YatcVariable** c2) {
 }
 
 void yatc_context_register(YatcVariable** context, YatcVariable* vr) {
-  fprintf(stderr, "context <%p>, vr <%p>\n", context, vr);
+  //fprintf(stderr, "context <%p>, vr <%p>\n", context, vr);
   if (!context || !vr)
     return;
   context[yatc_context_length(context)] = vr;
@@ -113,6 +113,12 @@ YatcVariable* yatc_context_get(YatcVariable** context, const char* name, unsigne
   return result;
 }
 
+void* yatc_variable_get(YatcVariable* vr) {
+  if (!vr)
+    return NULL;
+  return vr->mem;
+}
+
 const char* yatc_type_stringify(YatcCommonType tp) {
   if (tp == YString)
     return "YString";
@@ -124,6 +130,19 @@ const char* yatc_type_stringify(YatcCommonType tp) {
     return "YFunction (method with infinite arguments)";
   else
     return "YSomething (null)";
+}
+
+unsigned yatc_context_unregister(YatcVariable** context, const char* name, unsigned scope, YatcVariable* newv) {
+  if (!name || !context || !newv || !yatc_context_has(context, name, scope))
+    return 0;
+  for (unsigned i = 0; i < yatc_context_length(context); i++) {
+    if (context[i] && context[i]->name && context[i]->scope == scope && strcmp(context[i]->name, name) == 0) {
+      free(context[i]);
+      context[i] = newv;
+      return 1;
+    }
+  }
+  return 0;
 }
 
 void yatc_context_goodbye(YatcVariable** context) {

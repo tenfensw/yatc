@@ -1,17 +1,20 @@
 #include "cext.h"
 
 char* yatc_cstring_trim(const char* orig) {
-  if (!orig)
+  if (!orig || strlen(orig) < 1)
     return NULL;
-  char* buf = calloc(strlen(orig) + 1, sizeof(char));
-  unsigned continueAdding = 0;
-  for (unsigned i = 0; i < strlen(orig); i++) {
-    if (orig[i] != ' ' && orig[i] != '\t' && !continueAdding)
-      continueAdding = 1;
-    else
-      buf[strlen(buf)] = orig[i];
+  char* new = calloc(strlen(orig) + 1, sizeof(char));
+  unsigned offset = 0;
+  if (orig[0] == '\t' || orig[0] == ' ') {
+    while (offset < strlen(orig) && (orig[offset] == ' ' || orig[offset] == '\t'))
+      offset += 1;
   }
-  return buf;
+  unsigned index = 0;
+  for (unsigned i = offset; i < strlen(orig); i++) {
+    new[index] = orig[i];
+    index += 1;
+  }
+  return new;
 }  
 
 char** yatc_cstring_split(const char* orig, const char token) {
@@ -48,10 +51,13 @@ char** yatc_cstring_split(const char* orig, const char token) {
       blocked = !(blocked);
       if (!blocked)
 	where[strlen(where)] = current;
+      continue;
     } else if (current == token && insideBrackets < 1 && !blocked && !insideQuotes)
       index += 1;
     else
       where[strlen(where)] = current;
+    if (blocked)
+      blocked = 0;
   }
   char** result = yatc_csarray_removeEmpty(resultingBuffer);
   free(resultingBuffer);

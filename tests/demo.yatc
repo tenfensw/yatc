@@ -1,2 +1,3 @@
-const what meow
+set what meow
+set what meowie
 puts $what

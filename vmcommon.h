@@ -16,6 +16,7 @@ typedef struct YatcVariable_s YatcVariable;
 YatcVariable* yatc_variable_create(const char* name, YatcCommonType type, void* mem, unsigned scope);
 unsigned yatc_variable_set(YatcVariable* vr, void* mem);
 YatcCommonType yatc_variable_get_type(YatcVariable* vr);
+void* yatc_variable_get(YatcVariable* vr);
 YatcVariable** yatc_context_create(unsigned max);
 void yatc_context_register(YatcVariable** context, YatcVariable* vr);
 unsigned yatc_context_has(YatcVariable** context, const char* name, unsigned scope);
@@ -27,5 +28,6 @@ void yatc_context_goodbye(YatcVariable** context);
 void yatc_variable_makeConstant(YatcVariable* vl);
 void yatc_context_migrate(YatcVariable** c1, YatcVariable** c2);
 void yatc_variable_set_name(YatcVariable* vl, const char* nm);
+unsigned yatc_context_unregister(YatcVariable** context, const char* name, unsigned scope, YatcVariable* newv);
 
 #endif
