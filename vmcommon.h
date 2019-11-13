@@ -13,15 +13,18 @@ typedef enum YatcCommonType_e YatcCommonType;
 struct YatcVariable_s;
 typedef struct YatcVariable_s YatcVariable;
 
-YatcVariable* yatc_variable_create(const char* name, YatcCommonType type, void* mem);
-void yatc_variable_set(YatcVariable* vr, void* mem);
+YatcVariable* yatc_variable_create(const char* name, YatcCommonType type, void* mem, unsigned scope);
+unsigned yatc_variable_set(YatcVariable* vr, void* mem);
 YatcCommonType yatc_variable_get_type(YatcVariable* vr);
 YatcVariable** yatc_context_create(unsigned max);
 void yatc_context_register(YatcVariable** context, YatcVariable* vr);
-unsigned yatc_context_has(YatcVariable** context, const char* name);
-YatcVariable* yatc_context_get(YatcVariable** context, const char* name);
+unsigned yatc_context_has(YatcVariable** context, const char* name, unsigned scope);
+YatcVariable* yatc_context_get(YatcVariable** context, const char* name, unsigned scope);
 unsigned yatc_context_length(YatcVariable** context);
+unsigned yatc_variable_get_scope(YatcVariable* vr);
 void yatc_context_fprintf(FILE* where, YatcVariable** context);
 void yatc_context_goodbye(YatcVariable** context);
+void yatc_variable_makeConstant(YatcVariable* vl);
+void yatc_context_migrate(YatcVariable** c1, YatcVariable** c2);
 
 #endif

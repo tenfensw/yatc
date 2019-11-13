@@ -10,5 +10,6 @@
 #include "cext.h"
 #include "vmcommon.h"
 #include "vmcore.h"
+#include "vmio.h"
 
 #endif

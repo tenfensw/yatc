@@ -1,7 +1,7 @@
 #!/bin/sh
-rm -vf libyatc.a *.o
+rm -vf libyatc.a *.o yatc
 export CFLAGS="-g -std=c99 -Wall -Wextra $*"
-for file in cext.c vmcommon.c  vmcore.c
+for file in cext.c vmcommon.c vmio.c vmcore.c
 do
 	printf '\t%s\t%s\n' cc $file
 	cc -c $CFLAGS -I. -o `basename $file .c`.o $file || exit 3
@@ -13,4 +13,6 @@ do
 	printf '\t%s\t%s\n' ld $testn
 	cc $CFLAGS -I. -o tests/$testn.bin tests/$testn.c libyatc.a || exit 2
 done
+printf '\t%s\t%s\n' ld yatc
+cc $CFLAGS -I. -o yatc main.c libyatc.a || exit 4
 exit 0

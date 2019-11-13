@@ -7,7 +7,19 @@
 #include "cext.h"
 #include "vmcommon.h"
 
-struct YatcInterpreter {
+struct YatcInterpreter_s;
+typedef struct YatcInterpreter_s YatcInterpreter;
+
+struct YatcInterpreterResult_s {
+  unsigned success;
+  unsigned line;
+  char* description;
 };
+typedef struct YatcInterpreterResult_s YatcInterpreterResult;
+
+YatcInterpreter* yatc_interpreter_create(YatcVariable** context);
+YatcInterpreterResult* yatc_interpreter_exec(YatcInterpreter* interp, const char* line);
+void yatc_interpreter_goodbye(YatcInterpreter* interp);
+void yatc_interpreter_register(YatcVariable* vr);
 
 #endif
