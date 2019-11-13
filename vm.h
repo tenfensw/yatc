@@ -12,5 +12,6 @@
 #include "vmcore.h"
 #include "vmio.h"
 #include "vmexpr.h"
+#include "vmvector.h"
 
 #endif

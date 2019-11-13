@@ -1,3 +1,1 @@
-set num 1
-decr num 2
-puts stderr $num
+set myvec [vector meow 1 2 3 "whee hee"]

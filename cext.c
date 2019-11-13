@@ -17,6 +17,15 @@ char* yatc_cstring_trim(const char* orig) {
   return new;
 }  
 
+char* yatc_cstring_substring(const char* orig, unsigned start, unsigned end) {
+  if (!orig || strlen(orig) <= start || end >= strlen(orig) || end <= start)
+    return NULL;
+  char* result = calloc(end - start + 2, sizeof(char));
+  for (unsigned i = start; i < end; i++)
+    result[strlen(result)] = orig[i];
+  return result;
+}
+
 char** yatc_cstring_banalSplit(const char* orig, const char token) {
   if (!orig || strlen(orig) < 1)
     return NULL;

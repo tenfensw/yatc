@@ -86,7 +86,8 @@ void yatc_context_migrate(YatcVariable** c1, YatcVariable** c2) {
     } else if (orig->type == YInteger) {
       mirror->mem = malloc(sizeof(int));
       *(int*)(mirror->mem) = *(int*)(orig->mem);
-    }
+    } else
+      mirror->mem = orig->mem;
     yatc_context_register(c1, mirror);
   }
 }
@@ -113,10 +114,24 @@ YatcVariable* yatc_context_get(YatcVariable** context, const char* name, unsigne
   return result;
 }
 
+void yatc_variable_rename(YatcVariable* vr, const char* what) {
+  if (!vr || !what)
+    return;
+  free(vr->name);
+  vr->name = calloc(strlen(what) + 1, sizeof(char));
+  strcpy(vr->name, what);
+}
+
 void* yatc_variable_get(YatcVariable* vr) {
   if (!vr)
     return NULL;
   return vr->mem;
+}
+
+const char* yatc_variable_get_name(YatcVariable* vl) {
+  if (!vl)
+    return NULL;
+  return vl->name;
 }
 
 const char* yatc_type_stringify(YatcCommonType tp) {

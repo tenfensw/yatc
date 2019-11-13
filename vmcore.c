@@ -3,8 +3,13 @@
 
 #define NOTHING_WILL_BE_DONE_SORRY "Internal interpreter error, please investigate."
 
+#define _ctxsize 1024
+#define _vssize (_ctxsize * 2)
+
 struct YatcInterpreter_s {
   YatcVariable** context;
+  YatcVector** vectorStorage;
+  int vectorLast;
   unsigned scope;
   unsigned supportSubst;
 };
@@ -49,7 +54,9 @@ char* yatc_interpreter_unvars(const char* line, YatcVariable** context, unsigned
 	      free(bufMax);
 	      bufMax = calloc(strlen(mm) + 1, sizeof(char));
 	      strcpy(bufMax, mm);
-	    } else
+	    } else if (tp == YVector)
+	      sprintf(bufMax, "&&%s+", nameBuf);
+	    else
 	      strcpy(bufMax, "0");
 	  } else
 	    strcpy(bufMax, "0");
@@ -83,7 +90,9 @@ YatcInterpreter* yatc_interpreter_create(YatcVariable** context) {
   YatcInterpreter* interp = malloc(sizeof(YatcInterpreter));
   interp->scope = 0;
   interp->supportSubst = 1;
-  interp->context = calloc(1024, sizeof(YatcVariable*));
+  interp->vectorStorage = calloc(_vssize, sizeof(YatcVector*));
+  interp->vectorLast = -1;
+  interp->context = calloc(_ctxsize, sizeof(YatcVariable*));
   if (context)
     yatc_context_migrate(interp->context, context);
   return interp;
@@ -101,6 +110,19 @@ YatcInterpreterResult* yatc_interpreter_makeAnException(unsigned line, const cha
   return res;
 }
 
+unsigned yatc_interpreter_linkoverVector(YatcInterpreter* interp, YatcVector* vc) {
+  if (!vc || !interp)
+    return 0;
+  unsigned length = (unsigned)(interp->vectorLast + 1);
+  for (unsigned i = 0; i < length; i++) {
+    if (interp->vectorStorage[i] == vc)
+      return i;
+  }
+  interp->vectorStorage[length] = vc;
+  interp->vectorLast += 1;
+  return length;
+}
+
 char* yatc_interpreter_execInner(YatcInterpreter* interp, const char* line) {
   if (!line)
     return NULL;
@@ -110,14 +132,22 @@ char* yatc_interpreter_execInner(YatcInterpreter* interp, const char* line) {
     interp->supportSubst = 0;
     YatcInterpreterResult* rs = yatc_interpreter_exec(interp, line);
     interp->supportSubst = 1;
-    if (!rs || !rs->additionalData)
+    if (!rs || !rs->additionalData) {
+      fprintf(stderr, "%p some are null\n", rs);
       return NULL;
+    }
     YatcVariable* vb = rs->additionalData;
     if (yatc_variable_get_type(vb) == YString)
       return yatc_variable_get(vb);
     else if (yatc_variable_get_type(vb) == YInteger) {
       char* minBuf = calloc(10, sizeof(char));
       sprintf(minBuf, "%d", *(int*)(yatc_variable_get(vb)));
+      return minBuf;
+    } else if (yatc_variable_get_type(vb) == YVector) {
+      YatcVector* theVector = yatc_variable_get(vb);
+      unsigned vindex = yatc_interpreter_linkoverVector(interp, theVector);
+      char* minBuf = calloc(9, sizeof(char));
+      sprintf(minBuf, "&&%d=", vindex);
       return minBuf;
     }
     free(vb);
@@ -159,15 +189,15 @@ YatcInterpreterResult* yatc_interpreter_exec(YatcInterpreter* interp, const char
     return yatc_interpreter_makeAnException(0, NOTHING_WILL_BE_DONE_SORRY);
   }
   char** lineSplit = yatc_cstring_banalSplit(line, '\n');
-  //yatc_csarray_fprintf(stderr, lineSplit);
+  yatc_csarray_fprintf(stderr, lineSplit);
   if (!lineSplit)
     return yatc_interpreter_makeAnException(0, NOTHING_WILL_BE_DONE_SORRY);
   YatcVariable* lastData = NULL;
   for (unsigned i = 0; i < yatc_csarray_length(lineSplit); i++) {
     char* lineOrig = lineSplit[i];
-    //fprintf(stderr, "lineOrig = '%s'\n", lineOrig);
+    fprintf(stderr, "lineOrig = '%s'\n", lineOrig);
     char* lineUnv = yatc_interpreter_unvars(lineOrig, interp->context, interp->scope);
-    //fprintf(stderr, "lineUnv = '%s'\n", lineUnv);
+    fprintf(stderr, "lineUnv = '%s'\n", lineUnv);
     char* lineTrim = yatc_cstring_trim(lineUnv);
     free(lineUnv);
     char* line = NULL;
@@ -177,6 +207,7 @@ YatcInterpreterResult* yatc_interpreter_exec(YatcInterpreter* interp, const char
       line = calloc(strlen(lineTrim) + 1, sizeof(char));
       strcpy(line, lineTrim);
     }
+    fprintf(stderr, "line = '%s'\n", line);
     free(lineTrim);
     if (line && strlen(line) >= 1 && line[0] != '#') {
       if (lastData) {
@@ -184,7 +215,7 @@ YatcInterpreterResult* yatc_interpreter_exec(YatcInterpreter* interp, const char
 	lastData = NULL;
       }
       char** lineReallySplit = yatc_cstring_split(line, ' ');
-      //yatc_csarray_fprintf(stderr, lineReallySplit);
+      yatc_csarray_fprintf(stderr, lineReallySplit);
       char* firstCommand = lineReallySplit[0];
       if (strcmp(firstCommand, "puts") == 0) {
 	if (yatc_csarray_length(lineReallySplit) < 2)
@@ -257,7 +288,32 @@ YatcInterpreterResult* yatc_interpreter_exec(YatcInterpreter* interp, const char
 	  lastData = yatc_variable_create("", YString, buf, interp->scope);
 	} else
 	  return yatc_interpreter_makeAnException(i, "File does not exist.");
-      } else if (strcmp(firstCommand, "foreach") == 0} {
+      } else if (strcmp(firstCommand, "vector") == 0) {
+	fprintf(stderr, "Reached the vector command\n");
+	YatcVector* vc = yatc_vector_create(9000);
+	fprintf(stderr, "Allocated %p\n", vc);
+	if (yatc_csarray_length(lineReallySplit) >= 2) {
+	  for (unsigned i = 0; i < yatc_csarray_length(lineReallySplit); i++) {
+	    YatcInterpreterResult* rs = yatc_interpreter_exec(interp, lineReallySplit[i]);
+	    if (!rs->success)
+	      return yatc_interpreter_makeAnException(i, rs->description);
+	    free(rs->description);
+	    rs->description = NULL;
+	    YatcVariable* vrlb = rs->additionalData;
+	    if (!vrlb)
+	      return yatc_interpreter_makeAnException(i, "One cannot simply store YSomething in a vector...");
+	    unsigned status = yatc_vector_append(vc, vrlb);
+	    if (status == 2)
+	      return yatc_interpreter_makeAnException(i, "Cannot append data to vector that is completely full");
+	    else if (status == 1)
+	      return yatc_interpreter_makeAnException(i, NOTHING_WILL_BE_DONE_SORRY);
+	    free(rs);
+	  }
+	}
+	char* ptrVec = calloc(9, sizeof(char));
+	sprintf(ptrVec, "&&%d=", yatc_interpreter_linkoverVector(interp, vc));
+	lastData = yatc_variable_create("", YString, ptrVec, interp->scope);
+      } else if (strcmp(firstCommand, "foreach") == 0) {
 	if (yatc_csarray_length(lineReallySplit) < 4)
 	  return yatc_interpreter_makeAnException(i, "Please specify the name of the iterator, the iterable and the code to execute.");
 	// TODO
@@ -293,6 +349,22 @@ YatcInterpreterResult* yatc_interpreter_exec(YatcInterpreter* interp, const char
 	  tp = YInteger;
 	  value = malloc(sizeof(int));
 	  *(int*)(value) = numericValue;
+	} else if (strlen(line) >= 4 && line[0] == '&' && line[1] == '&' && (line[strlen(line) - 1] == '=' || line[strlen(line) - 1] == '+')) {
+	  tp = YVector;
+	  unsigned justTheDesc = 0;
+	  if (line[strlen(line) - 1] == '=')
+	    sscanf(line, "&&%d=", &justTheDesc);
+	  else {
+	    char* name = calloc(256, sizeof(char));
+	    sscanf(line, "&&%s+", name);
+	    if (!yatc_context_has(interp->context, name, interp->scope))
+	      return yatc_interpreter_makeAnException(i, "Vector is no longer accessible.");
+	    YatcVariable* vltmp = yatc_context_get(interp->context, name, interp->scope);
+	    if (yatc_variable_get_type(vltmp) != YVector || !yatc_variable_get(vltmp))
+	      return yatc_interpreter_makeAnException(i, "Vector is no longer accessible.");
+	    justTheDesc = yatc_interpreter_linkoverVector(interp, yatc_variable_get(vltmp));
+	  }
+	  value = interp->vectorStorage[justTheDesc];
 	}
 	YatcVariable* vb = yatc_variable_create("", tp, value, interp->scope);
 	lastData = vb;
@@ -319,4 +391,3 @@ void yatc_interpreter_goodbye(YatcInterpreter* interp) {
   free(interp);
 }
 
-void yatc_interpreter_register(YatcVariable* vr);
