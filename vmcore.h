@@ -7,7 +7,6 @@
 #include "cext.h"
 #include "vmcommon.h"
 #include "vmexpr.h"
-#include "vmvector.h"
 
 struct YatcInterpreter_s;
 typedef struct YatcInterpreter_s YatcInterpreter;
@@ -24,5 +23,8 @@ YatcInterpreter* yatc_interpreter_create(YatcVariable** context);
 YatcInterpreterResult* yatc_interpreter_exec(YatcInterpreter* interp, const char* line);
 void yatc_interpreter_goodbye(YatcInterpreter* interp);
 void yatc_interpreter_register(YatcVariable* vr);
+unsigned yatc_vector_indeed(const char* vc);
+unsigned yatc_vector_length(const char* vc);
+char** yatc_vector_convert(const char* vc);
 
 #endif

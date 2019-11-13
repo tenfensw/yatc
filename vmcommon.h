@@ -31,5 +31,6 @@ void yatc_context_migrate(YatcVariable** c1, YatcVariable** c2);
 void yatc_variable_set_name(YatcVariable* vl, const char* nm);
 const char* yatc_variable_get_name(YatcVariable* vl);
 unsigned yatc_context_unregister(YatcVariable** context, const char* name, unsigned scope, YatcVariable* newv);
+void yatc_variable_set_scope(YatcVariable* vl, unsigned level);
 
 #endif
