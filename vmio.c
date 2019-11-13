@@ -3,13 +3,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-void yatc_io_simplestOutput(const char* text) {
-  if (!text)
-    printf("VSomething\n");
-  else
-    printf("%s\n", text);
-}
-
 unsigned yatc_io_fileExists(const char* fn) {
   if (!fn || access(fn, F_OK) == -1)
     return 0;
@@ -32,3 +25,14 @@ char* yatc_io_readAll(const char* fn) {
   fclose(fdesc);
   return buf;
 }
+
+unsigned yatc_io_unlink(const char* fn) {
+  if (!fn)
+    return 0;
+#ifdef __linux__
+  return (unlink(fn) == 0);
+#else
+  return (remove(fn) == 0);
+#endif
+}
+

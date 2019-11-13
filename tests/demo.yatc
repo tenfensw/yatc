@@ -1,2 +1,3 @@
-# This is a comment
-puts whee
+# Gets user output and echoes it back
+set input [prompt "What is your name?"]
+puts "Hello there, $input!"

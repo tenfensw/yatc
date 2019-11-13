@@ -11,7 +11,7 @@ struct YatcInterpreter_s {
 typedef struct YatcInterpreter_s YatcInterpreter;
 
 unsigned yatc_interpreter_isCrucialChar(const char tkn) {
-  return (tkn == ' ' || tkn == ',' || tkn == '\t' || tkn == '(' || tkn == ')' || tkn == '\0');
+  return (tkn == '(' || tkn == ')' || tkn == '\0' || tkn == '\n' || isspace(tkn) != 0 || ispunct(tkn) != 0);
 }
 
 char* yatc_interpreter_unvars(const char* line, YatcVariable** context, unsigned scope) {
@@ -225,6 +225,13 @@ YatcInterpreterResult* yatc_interpreter_exec(YatcInterpreter* interp, const char
 	*resultingAlc = resulting;
 	YatcVariable* theVariable = yatc_variable_create("", YInteger, resultingAlc, interp->scope);
 	lastData = theVariable;
+      } else if (strcmp(firstCommand, "prompt") == 0) {
+	char* what = NULL;
+	if (yatc_csarray_length(lineReallySplit) >= 2)
+	  what = lineReallySplit[1];
+	char* buf = yatc_io_prompt(what);
+	YatcVariable* vb = yatc_variable_create("", YString, buf, interp->scope);
+	lastData = vb;
       } else {
 	int numericValue = atoi(line);
 	YatcCommonType tp = YString;
