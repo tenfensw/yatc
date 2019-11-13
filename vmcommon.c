@@ -10,7 +10,7 @@ struct YatcVariable_s {
 typedef struct YatcVariable_s YatcVariable;
 
 YatcVariable* yatc_variable_create(const char* name, YatcCommonType type, void* mem, unsigned scope) {
-  if (!name || type == YSomething)
+  if (!name)
     return NULL;
   YatcVariable* result = malloc(sizeof(YatcVariable));
   result->type = type;
@@ -92,6 +92,7 @@ void yatc_context_migrate(YatcVariable** c1, YatcVariable** c2) {
 }
 
 void yatc_context_register(YatcVariable** context, YatcVariable* vr) {
+  fprintf(stderr, "context <%p>, vr <%p>\n", context, vr);
   if (!context || !vr)
     return;
   context[yatc_context_length(context)] = vr;
@@ -133,6 +134,14 @@ void yatc_context_goodbye(YatcVariable** context) {
     context[i] = NULL;
   }
   free(context);
+}
+
+void yatc_variable_set_name(YatcVariable* vl, const char* nm) {
+  if (!vl || !nm)
+    return;
+  free(vl->name);
+  vl->name = calloc(strlen(nm) + 1, sizeof(char));
+  strcpy(vl->name, nm);
 }
 
 void yatc_context_fprintf(FILE* where, YatcVariable** context) {

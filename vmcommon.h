@@ -26,5 +26,6 @@ void yatc_context_fprintf(FILE* where, YatcVariable** context);
 void yatc_context_goodbye(YatcVariable** context);
 void yatc_variable_makeConstant(YatcVariable* vl);
 void yatc_context_migrate(YatcVariable** c1, YatcVariable** c2);
+void yatc_variable_set_name(YatcVariable* vl, const char* nm);
 
 #endif

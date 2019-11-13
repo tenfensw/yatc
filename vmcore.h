@@ -14,6 +14,7 @@ struct YatcInterpreterResult_s {
   unsigned success;
   unsigned line;
   char* description;
+  void* additionalData;
 };
 typedef struct YatcInterpreterResult_s YatcInterpreterResult;
 

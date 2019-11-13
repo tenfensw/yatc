@@ -1,1 +1,2 @@
-puts meow
+const what meow
+puts $what
