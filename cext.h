@@ -13,6 +13,7 @@
 #define YATC_STRING_MAXLEN (1024 * 1024)
 
 char** yatc_cstring_split(const char* orig, const char token);
+char** yatc_cstring_banalSplit(const char* orig, const char token);
 unsigned yatc_cstring_howMany(const char* orig, const char token);
 char* yatc_cstring_transformCase(const char* orig, unsigned flag);
 char** yatc_csarray_removeEmpty(char** orig);

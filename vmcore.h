@@ -6,6 +6,7 @@
 #include <string.h>
 #include "cext.h"
 #include "vmcommon.h"
+#include "vmexpr.h"
 
 struct YatcInterpreter_s;
 typedef struct YatcInterpreter_s YatcInterpreter;

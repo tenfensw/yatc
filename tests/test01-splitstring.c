@@ -4,7 +4,7 @@
 int main(int argc, const char** argv) {
    char* str = calloc(256, sizeof(char));
    if (argc < 2)
-     strcpy(str, "if {$a == \"hello\"} { puts 'Goodbye' }");
+     strcpy(str, "if {$a == \"hello\"} { puts {Goodbye} }");
    else
      strcpy(str, argv[1]);
    printf("Original: %s\n", str);

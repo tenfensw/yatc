@@ -1,3 +1,2 @@
-set what meow
-set what meowie
-puts $what
+# This is a comment
+puts whee

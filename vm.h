@@ -11,5 +11,6 @@
 #include "vmcommon.h"
 #include "vmcore.h"
 #include "vmio.h"
+#include "vmexpr.h"
 
 #endif

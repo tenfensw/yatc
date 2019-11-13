@@ -1,7 +1,7 @@
 #!/bin/sh
 rm -vf libyatc.a *.o yatc
 export CFLAGS="-g -std=c99 -Wall -Wextra $*"
-for file in cext.c vmcommon.c vmio.c vmcore.c tinyexpr/tinyexpr.c
+for file in cext.c vmcommon.c vmio.c vmcore.c tinyexpr/tinyexpr.c vmexpr.c
 do
 	printf '\t%s\t%s\n' cc $file
 	cc -c $CFLAGS -I. -Itinyexpr -o `basename $file .c`.o $file || exit 3

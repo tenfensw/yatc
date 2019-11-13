@@ -17,6 +17,29 @@ char* yatc_cstring_trim(const char* orig) {
   return new;
 }  
 
+char** yatc_cstring_banalSplit(const char* orig, const char token) {
+  if (!orig || strlen(orig) < 1)
+    return NULL;
+  char** allocatedBuffer = calloc(yatc_cstring_howMany(orig, token) + 2, sizeof(char*));
+  unsigned bufId = 0;
+  unsigned insideBrackets = 0;
+  for (unsigned i = 0; i < strlen(orig); i++) {
+    if (!(allocatedBuffer[bufId]))
+      allocatedBuffer[bufId] = calloc(strlen(orig), sizeof(char));
+    char* where = allocatedBuffer[bufId];
+    if (orig[i] == token && insideBrackets < 1)
+      bufId += 1;
+    else if (orig[i] == '{' || orig[i] == '}') {
+      insideBrackets += 1;
+      if (orig[i] == '}')
+	insideBrackets -= 2;
+      where[strlen(where)] = orig[i];
+    } else
+      where[strlen(where)] = orig[i];
+  }
+  return allocatedBuffer;
+}
+
 char** yatc_cstring_split(const char* orig, const char token) {
   if (!orig || token == '\0')
     return NULL;
@@ -47,6 +70,9 @@ char** yatc_cstring_split(const char* orig, const char token) {
 	insideBrackets -= 2;
       if (insideBrackets == 1 || insideBrackets == 0)
 	index += 1;
+    } else if ((current == '[' || current == ']') && !blocked) {
+      insideQuotes = (current == '[');
+      where[strlen(where)] = current;
     } else if (current == '\\') {
       blocked = !(blocked);
       if (!blocked)
