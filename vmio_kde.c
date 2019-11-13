@@ -10,18 +10,33 @@
 #error "This will only work on Linux/FreeBSD with KDE 4 or 5."
 #endif
 
-void yatc_io_simplestOutput(const char* text) {
+void yatc_io_kdialogOutput(const char* text, const char* dlgPreferrence) {
+  if (!dlgPreferrence) {
+    yatc_io_kdialogOutput(text, "msgbox");
+    return;
+  }
   if (!text) {
-    yatc_io_simplestOutput("YSomething");
+    yatc_io_kdialogOutput("YSomething", dlgPreferrence);
     return;
   }
   char* cmd = calloc(strlen(text) + 256, sizeof(char));
-  strcpy(cmd, "kdialog --title 'Current application says' --msgbox '");
+  strcpy(cmd, "kdialog --title 'Current application says' --");
+  strcat(cmd, dlgPreferrence);
+  strcat(cmd, " '");
   strcat(cmd, text);
   strcat(cmd, "'");
   //printf("%s\n", cmd);
   system(cmd);
   free(cmd);
+}
+
+
+void yatc_io_simplestOutput(const char* text) {
+  yatc_io_kdialogOutput(text, "msgbox");
+}
+
+void yatc_io_errorOutput(const char* text) {
+  yatc_io_kdialogOutput(text, "error");
 }
 
 char* yatc_io_prompt(const char* what) {

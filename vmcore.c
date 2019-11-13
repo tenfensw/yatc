@@ -189,7 +189,22 @@ YatcInterpreterResult* yatc_interpreter_exec(YatcInterpreter* interp, const char
       if (strcmp(firstCommand, "puts") == 0) {
 	if (yatc_csarray_length(lineReallySplit) < 2)
 	  return yatc_interpreter_makeAnException(i, "Please specify at least what to output.");
-	yatc_io_simplestOutput(lineReallySplit[1]);
+	if (yatc_csarray_length(lineReallySplit) < 3)
+	  yatc_io_simplestOutput(lineReallySplit[1]);
+	else {
+	  char* where = yatc_cstring_transformCase(lineReallySplit[1], YATC_STRING_LOWERCASE);
+	  if (!where) {
+	    where = calloc(8, sizeof(char));
+	    strcpy(where, "stdout");
+	  }
+	  char* what = lineReallySplit[2];
+	  if (strcmp(where, "stderr") == 0)
+	    yatc_io_errorOutput(what);
+	  else if (strcmp(where, "stdout") == 0)
+	    yatc_io_simplestOutput(what);
+	  else if (!yatc_io_fileOutput(where, what))
+	    return yatc_interpreter_makeAnException(i, "Failed to flush the contents of the output file or stream.");
+	}
       } else if (strcmp(firstCommand, "set") == 0 || strcmp(firstCommand, "const") == 0) {
 	//fprintf(stderr, "yatc_csarray_length(lineReallySplit) = %d\n", yatc_csarray_length(lineReallySplit));
 	if (yatc_csarray_length(lineReallySplit) < 3 || (((yatc_csarray_length(lineReallySplit) - 1) % 2) != 0))
@@ -232,6 +247,43 @@ YatcInterpreterResult* yatc_interpreter_exec(YatcInterpreter* interp, const char
 	char* buf = yatc_io_prompt(what);
 	YatcVariable* vb = yatc_variable_create("", YString, buf, interp->scope);
 	lastData = vb;
+      } else if (strcmp(firstCommand, "read") == 0) {
+	if (yatc_csarray_length(lineReallySplit) < 2)
+	  return yatc_interpreter_makeAnException(i, "Please specify a path to the file or a URL from which the data shall be read.");
+	if (yatc_io_fileExists(lineReallySplit[1])) {
+	  char* buf = yatc_io_readAll(lineReallySplit[1]);
+	  if (!buf)
+	    return yatc_interpreter_makeAnException(i, "File reading error, do you have permissions to read the file?");
+	  lastData = yatc_variable_create("", YString, buf, interp->scope);
+	} else
+	  return yatc_interpreter_makeAnException(i, "File does not exist.");
+      } else if (strcmp(firstCommand, "foreach") == 0} {
+	if (yatc_csarray_length(lineReallySplit) < 4)
+	  return yatc_interpreter_makeAnException(i, "Please specify the name of the iterator, the iterable and the code to execute.");
+	// TODO
+      } else if (strcmp(firstCommand, "incr") == 0 || strcmp(firstCommand, "decr") == 0) {
+	if (yatc_csarray_length(lineReallySplit) < 2)
+	  return yatc_interpreter_makeAnException(i, "Please specify at least the name of the variable that you want to increment.");
+	char* coefOrig = lineReallySplit[2];
+	if (!coefOrig) {
+	  coefOrig = malloc(sizeof(char) * 2);
+	  coefOrig[0] = '0';
+	  coefOrig[1] = '\0';
+	}
+	int coef = atoi(coefOrig);
+	for (unsigned i = 1; i < yatc_csarray_length(lineReallySplit); i++) {
+	  char* vn = lineReallySplit[i];
+	  if (!yatc_context_has(interp->context, vn, interp->scope))
+	    return yatc_interpreter_makeAnException(i, "One or more variables are not declared in this scope.");
+	  YatcVariable* vbl = yatc_context_get(interp->context, vn, interp->scope);
+	  if (yatc_variable_get_type(vbl) != YInteger)
+	    return yatc_interpreter_makeAnException(i, "Strings cannot be incremented.");
+	  int* mem = yatc_variable_get(vbl);
+	  if (strcmp(firstCommand, "decr") == 0)
+	    *(mem) -= coef;
+	  else
+	    *(mem) += coef;
+	}
       } else {
 	int numericValue = atoi(line);
 	YatcCommonType tp = YString;

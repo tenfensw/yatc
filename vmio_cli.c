@@ -12,6 +12,13 @@ void yatc_io_simplestOutput(const char* text) {
     printf("%s\n", text);
 }
 
+void yatc_io_errorOutput(const char* text) {
+  if (!text)
+    fprintf(stderr, "VSomething\n");
+  else
+    fprintf(stderr, "%s\n", text);
+}
+
 char* yatc_io_prompt(const char* what) {
   if (what)
     printf("%s ", what);

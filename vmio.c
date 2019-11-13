@@ -36,3 +36,14 @@ unsigned yatc_io_unlink(const char* fn) {
 #endif
 }
 
+unsigned yatc_io_fileOutput(const char* fn, const char* what) {
+  if (!fn || !what)
+    return 0;
+  FILE* desc = fopen(fn, "w");
+  if (!desc)
+    return 0;
+  fputs(what, desc);
+  fclose(desc);
+  return 1;
+}
+
