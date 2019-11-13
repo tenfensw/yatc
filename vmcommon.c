@@ -1,4 +1,5 @@
 #include "vmcommon.h"
+#include "cext.h"
 
 struct YatcVariable_s {
   char* name;
@@ -160,6 +161,12 @@ unsigned yatc_context_unregister(YatcVariable** context, const char* name, unsig
   return 0;
 }
 
+void yatc_variable_set_scope(YatcVariable* vl, unsigned level) {
+  if (!vl)
+    return;
+  vl->scope = (unsigned)(level);
+}
+
 void yatc_context_goodbye(YatcVariable** context) {
   if (!context)
     return;
@@ -191,6 +198,8 @@ void yatc_context_fprintf(FILE* where, YatcVariable** context) {
 	  fprintf(where, "'%s' ", (char*)(cv->mem));
 	else if (cv->type == YInteger)
 	  fprintf(where, "%d ", *(int*)(cv->mem));
+	else if (cv->type == YVector)
+	  fprintf(where, "%d elements ", yatc_cstring_howMany(cv->mem, '\r'));
 	fprintf(where, "<%p>\n", cv->mem);
       } else
 	fprintf(where, "(null)\n");
