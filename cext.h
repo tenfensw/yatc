@@ -21,6 +21,8 @@ unsigned yatc_csarray_length(char** orig);
 void yatc_csarray_fprintf(FILE* where, char** array);
 char* yatc_cstring_trim(const char* orig);
 char* yatc_cstring_substring(const char* orig, unsigned start, unsigned end);
+unsigned yatc_csarray_has(char** array, const char* what);
+char** yatc_csarray_part(char** array, unsigned start, unsigned end);
 
 #define yatc_csarray_printf(array) yatc_csarray_fprintf(stdout, array)
 #define yatc_array_append(thearray, itslength, what, reallocation) { \

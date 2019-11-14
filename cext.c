@@ -49,6 +49,28 @@ char** yatc_cstring_banalSplit(const char* orig, const char token) {
   return allocatedBuffer;
 }
 
+char** yatc_csarray_part(char** array, unsigned start, unsigned end) {
+  if (!array)
+    return NULL;
+  char** buf = calloc(end - start + 1, sizeof(char*));
+  unsigned base = 0;
+  for (unsigned i = start; i < end - 1; i++) {
+    buf[base] = array[i];
+    base += 1;
+  }
+  return buf;
+}
+
+unsigned yatc_csarray_has(char** array, const char* what) {
+  if (!array || !what)
+    return 0;
+  for (unsigned i = 0; i < yatc_csarray_length(array); i++) {
+    if (strcmp(array[i], what) == 0)
+      return 1;
+  }
+  return 0;
+}
+
 char** yatc_cstring_split(const char* orig, const char token) {
   if (!orig || token == '\0')
     return NULL;
@@ -79,6 +101,8 @@ char** yatc_cstring_split(const char* orig, const char token) {
 	insideBrackets -= 2;
       if (insideBrackets == 1 || insideBrackets == 0)
 	index += 1;
+      else
+	where[strlen(where)] = current;
     } else if ((current == '[' || current == ']') && !blocked) {
       insideQuotes = (current == '[');
       where[strlen(where)] = current;

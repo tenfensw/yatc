@@ -190,7 +190,7 @@ YatcInterpreterResult* yatc_interpreter_exec(YatcInterpreter* interp, const char
 	lastData = NULL;
       }
       char** lineReallySplit = yatc_cstring_split(line, ' ');
-      //yatc_csarray_fprintf(stderr, lineReallySplit);
+//       yatc_csarray_fprintf(stderr, lineReallySplit);
       char* firstCommand = lineReallySplit[0];
       if (strcmp(firstCommand, "puts") == 0) {
 	if (yatc_csarray_length(lineReallySplit) < 2)
@@ -211,6 +211,14 @@ YatcInterpreterResult* yatc_interpreter_exec(YatcInterpreter* interp, const char
 	  else if (!yatc_io_fileOutput(where, what))
 	    return yatc_interpreter_makeAnException(i, "Failed to flush the contents of the output file or stream.");
 	}
+      } else if (strcmp(firstCommand, "cond") == 0) {
+	if (yatc_csarray_length(lineReallySplit) < 2)
+	  return yatc_interpreter_makeAnException(i, "Please specify the condition that you want to evaluate.");
+	char* condition = yatc_interpreter_unvars(lineReallySplit[1], interp->context, interp->scope);
+	unsigned result = yatc_expressions_conditionMet(condition);
+	int* resultCast = malloc(sizeof(int));
+	*(resultCast) = (int)(result);
+	lastData = yatc_variable_create("", YInteger, resultCast, interp->scope);
       } else if (strcmp(firstCommand, "set") == 0 || strcmp(firstCommand, "const") == 0) {
 	//fprintf(stderr, "yatc_csarray_length(lineReallySplit) = %d\n", yatc_csarray_length(lineReallySplit));
 	if (yatc_csarray_length(lineReallySplit) < 3 || (((yatc_csarray_length(lineReallySplit) - 1) % 2) != 0))
@@ -364,6 +372,43 @@ YatcInterpreterResult* yatc_interpreter_exec(YatcInterpreter* interp, const char
 	  mem[0] = varv[what];
 	  mem[1] = '\0';
 	  lastData = yatc_variable_create("", YString, mem, interp->scope);
+	}
+      } else if (strcmp(firstCommand, "if") == 0) {
+	if (yatc_csarray_length(lineReallySplit) < 4 || ((yatc_csarray_length(lineReallySplit) % 3) != 0))
+	  return yatc_interpreter_makeAnException(i, "Please specify at least one condition and the subsequent algorithm to run.");
+	unsigned atLeastOneDid = 0;
+	//fprintf(stderr, "reached if, length = %d\n", yatc_csarray_length(lineReallySplit));
+	for (unsigned b = 0; b < yatc_csarray_length(lineReallySplit); b += 3) {
+	  //fprintf(stderr, "b = %d\n", b);
+	  char* keyword = lineReallySplit[b];
+	  char* condition = yatc_interpreter_unvars(lineReallySplit[b + 1], interp->context, interp->scope);
+	  char* code = lineReallySplit[b + 2];
+	  //fprintf(stderr, "keyword = '%s', condition = '%s', code:\n%s\n", keyword, condition, code);
+	  if (atLeastOneDid)
+	    break;
+	  if (strcmp(keyword, "if") == 0 || strcmp(keyword, "elseif") == 0) {
+	    atLeastOneDid = yatc_expressions_conditionMet(condition);
+	    //fprintf(stderr, "condition = '%s', met = %d\n", condition, atLeastOneDid);
+	    if (atLeastOneDid) {
+	      YatcInterpreterResult* rs = yatc_interpreter_exec(interp, code);
+	      if (!rs)
+		return yatc_interpreter_makeAnException(i, NOTHING_WILL_BE_DONE_SORRY);
+	      else if (rs->success)
+		free(rs);
+	      else
+		return rs;
+	    }
+	  } else if (strcmp(keyword, "else") == 0) {
+	    atLeastOneDid = 1;
+	    YatcInterpreterResult* rs = yatc_interpreter_exec(interp, code);
+	    if (!rs)
+	      return yatc_interpreter_makeAnException(i, NOTHING_WILL_BE_DONE_SORRY);
+	    else if (rs->success)
+	      free(rs);
+	    else
+	      return rs;
+	  } else
+	    return yatc_interpreter_makeAnException(i, "Unknown conditional keyword (must be if, elseif or else)");
 	}
       } else if (strcmp(firstCommand, "incr") == 0 || strcmp(firstCommand, "decr") == 0) {
 	if (yatc_csarray_length(lineReallySplit) < 2)
