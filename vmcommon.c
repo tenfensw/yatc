@@ -62,6 +62,16 @@ unsigned yatc_context_length(YatcVariable** context) {
   return count;
 }
 
+YatcVariable* yatc_context_get_subr(YatcVariable** context, const char* name) {
+  if (!context || !name)
+    return NULL;
+  for (unsigned i = 0; i < yatc_context_length(context); i++) {
+    if (context[i] && context[i]->name && context[i]->type == YSubroutine && strcmp(context[i]->name, name) == 0)
+      return context[i];
+  }
+  return NULL;
+}
+
 void yatc_variable_makeConstant(YatcVariable* vl) {
   if (!vl)
     return;
@@ -142,8 +152,8 @@ const char* yatc_type_stringify(YatcCommonType tp) {
     return "YInteger (32-bit signed)";
   else if (tp == YVector)
     return "YVector (array-based list implementation)";
-  else if (tp == YFunction)
-    return "YFunction (method with infinite arguments)";
+  else if (tp == YSubroutine)
+    return "YSubroutine (method with infinite arguments)";
   else
     return "YSomething (null)";
 }

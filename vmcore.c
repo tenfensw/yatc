@@ -48,7 +48,7 @@ char* yatc_interpreter_unvars(const char* line, YatcVariable** context, unsigned
 	    YatcCommonType tp = yatc_variable_get_type(vr);
 	    if (tp == YInteger)
 	      sprintf(bufMax, "%d", *(int*)(mm));
-	    else if (tp == YString || tp == YVector) {
+	    else if (tp == YString || tp == YVector || tp == YSubroutine) {
 	      free(bufMax);
 	      bufMax = calloc(strlen(mm) + 1, sizeof(char));
 	      strcpy(bufMax, mm);
@@ -118,7 +118,7 @@ char* yatc_interpreter_execInner(YatcInterpreter* interp, const char* line) {
       return NULL;
     }
     YatcVariable* vb = rs->additionalData;
-    if (yatc_variable_get_type(vb) == YString || yatc_variable_get_type(vb) == YVector)
+    if (yatc_variable_get_type(vb) == YString || yatc_variable_get_type(vb) == YVector || yatc_variable_get_type(vb) == YSubroutine)
       return yatc_variable_get(vb);
     else if (yatc_variable_get_type(vb) == YInteger) {
       char* minBuf = calloc(10, sizeof(char));
@@ -211,6 +211,34 @@ YatcInterpreterResult* yatc_interpreter_exec(YatcInterpreter* interp, const char
 	  else if (!yatc_io_fileOutput(where, what))
 	    return yatc_interpreter_makeAnException(i, "Failed to flush the contents of the output file or stream.");
 	}
+      } else if (yatc_context_get_subr(interp->context, firstCommand)) {
+	YatcVariable* implementation = yatc_context_get_subr(interp->context, firstCommand);
+	char* code = yatc_variable_get(implementation);
+	if (!code)
+	  return yatc_interpreter_makeAnException(i, NOTHING_WILL_BE_DONE_SORRY);
+	interp->scope += 1;
+	for (unsigned i = 1; i < yatc_csarray_length(lineReallySplit); i++) {
+	  char* stringifiedNum = calloc(4, sizeof(char));
+	  sprintf(stringifiedNum, "%d", i);
+	  YatcVariable* vbl = yatc_variable_create(stringifiedNum, YString, lineReallySplit[i], interp->scope);
+	  if (yatc_context_has(interp->context, stringifiedNum, interp->scope))
+	    yatc_context_unregister(interp->context, stringifiedNum, interp->scope, vbl);
+	  else
+	    yatc_context_register(interp->context, vbl);
+	}
+	//yatc_context_fprintf(stderr, interp->context);
+	YatcInterpreterResult* rslt = yatc_interpreter_exec(interp, code);
+	interp->scope -= 1;
+	if (!rslt)
+	  return yatc_interpreter_makeAnException(i, NOTHING_WILL_BE_DONE_SORRY);
+	else if (!rslt->success) {
+	  rslt->line = i;
+	  return rslt;
+	} else {
+	  lastData = rslt->additionalData;
+	  rslt->additionalData = NULL;
+	  free(rslt);
+	}
       } else if (strcmp(firstCommand, "cond") == 0) {
 	if (yatc_csarray_length(lineReallySplit) < 2)
 	  return yatc_interpreter_makeAnException(i, "Please specify the condition that you want to evaluate.");
@@ -219,6 +247,17 @@ YatcInterpreterResult* yatc_interpreter_exec(YatcInterpreter* interp, const char
 	int* resultCast = malloc(sizeof(int));
 	*(resultCast) = (int)(result);
 	lastData = yatc_variable_create("", YInteger, resultCast, interp->scope);
+      } else if (strcmp(firstCommand, "sub") == 0) {
+	if (yatc_csarray_length(lineReallySplit) < 2)
+	  return yatc_interpreter_makeAnException(i, "Please specify the name and the algorithm of the subroutine that you're about to implement.");
+	char* name = lineReallySplit[1];
+	char* code = lineReallySplit[2];
+	if (yatc_context_get_subr(interp->context, line))
+	  return yatc_interpreter_makeAnException(i, "Subroutine with the same name already exists.");
+	char* codeCloned = calloc(strlen(code) + 1, sizeof(char));
+	strcpy(codeCloned, code);
+	YatcVariable* vb = yatc_variable_create(name, YSubroutine, codeCloned, 0);
+	yatc_context_register(interp->context, vb);
       } else if (strcmp(firstCommand, "set") == 0 || strcmp(firstCommand, "const") == 0) {
 	//fprintf(stderr, "yatc_csarray_length(lineReallySplit) = %d\n", yatc_csarray_length(lineReallySplit));
 	if (yatc_csarray_length(lineReallySplit) < 3 || (((yatc_csarray_length(lineReallySplit) - 1) % 2) != 0))

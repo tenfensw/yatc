@@ -7,7 +7,7 @@
 
 #define YATC_STRING_MINALLOC 256
 
-enum YatcCommonType_e { YInteger = 0, YString = 1, YVector = 2, YFunction = 3, YSomething = 4 };
+enum YatcCommonType_e { YInteger = 0, YString = 1, YVector = 2, YSubroutine = 3, YSomething = 4 };
 typedef enum YatcCommonType_e YatcCommonType;
 
 struct YatcVariable_s;
@@ -32,5 +32,6 @@ void yatc_variable_set_name(YatcVariable* vl, const char* nm);
 const char* yatc_variable_get_name(YatcVariable* vl);
 unsigned yatc_context_unregister(YatcVariable** context, const char* name, unsigned scope, YatcVariable* newv);
 void yatc_variable_set_scope(YatcVariable* vl, unsigned level);
+YatcVariable* yatc_context_get_subr(YatcVariable** context, const char* name);
 
 #endif
