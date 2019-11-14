@@ -26,6 +26,31 @@ char* yatc_cstring_substring(const char* orig, unsigned start, unsigned end) {
   return result;
 }
 
+const char* yatc_lowlevel_get_os() {
+#ifdef YATC_CUSTOMPLATFORM
+  return YATC_CUSTOMPLATFORM;
+#endif
+#ifdef __linux__
+  return "Linux";
+#elif defined(__APPLE__)
+  return "macOS";
+#elif defined(__FreeBSD__)
+  return "FreeBSD";
+#elif defined(__NetBSD__)
+  return "NetBSD";
+#elif defined(__OpenBSD__)
+  return "OpenBSD";
+#elif defined(__sun)
+  return "Solaris";
+#elif defined(__QNX__)
+  return "QNX";
+#elif defined(__BEOS__)
+  return "Zeta";
+#else
+  return "POSIX";
+#endif
+}
+
 char** yatc_cstring_banalSplit(const char* orig, const char token) {
   if (!orig || strlen(orig) < 1)
     return NULL;

@@ -12,6 +12,10 @@ void yatc_io_simplestOutput(const char* text) {
     printf("%s\n", text);
 }
 
+const char* yatc_io_streamsImplementation() {
+  return "cli";
+}
+
 void yatc_io_errorOutput(const char* text) {
   if (!text)
     fprintf(stderr, "VSomething\n");

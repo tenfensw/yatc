@@ -28,6 +28,7 @@ char* yatc_interpreter_unvars(const char* line, YatcVariable** context, unsigned
   for (unsigned i = 0; i < strlen(line) + 1; i++) {
     char character = line[i];
     if (character == '$' && insideBrackets < 1) {
+      //fprintf(stderr, "processed line: '%s' [%d], insideBrackets = %d, blocked = %d\n", line, i, insideBrackets, blocked);
       insideName = 1;
       free(nameBuf);
       nameBuf = calloc(strlen(line) - i + 1, sizeof(char));
@@ -130,11 +131,12 @@ char* yatc_interpreter_execInner(YatcInterpreter* interp, const char* line) {
   }
   char* bufForLine = calloc(strlen(line), sizeof(char));
   unsigned insideBrackets = 0;
+  unsigned insideCurlyBrackets = 0;
   for (unsigned i = 0; i < strlen(line); i++) {
     char character = line[i];
-    if (character == '[')
+    if (character == '[' && insideCurlyBrackets < 1)
      insideBrackets += 1;
-    else if (character == ']') {
+    else if (character == ']' && insideCurlyBrackets < 1) {
       insideBrackets -= 1;
       if (insideBrackets == 0) {
 	char* toAppend = yatc_interpreter_execInner(interp, bufForLine);
@@ -148,6 +150,14 @@ char* yatc_interpreter_execInner(YatcInterpreter* interp, const char* line) {
 	free(toAppend);
 	bufForLine = calloc(strlen(line), sizeof(char));
       }
+    } else if (character == '{' || character == '}') {
+      insideCurlyBrackets += 1;
+      if (character == '}')
+	insideCurlyBrackets -= 2;
+      if (insideBrackets < 1)
+	result[strlen(result)] = character;
+      else
+	bufForLine[strlen(bufForLine)] = character;
     } else if (insideBrackets >= 1)
       bufForLine[strlen(bufForLine)] = character;
     else
@@ -247,6 +257,28 @@ YatcInterpreterResult* yatc_interpreter_exec(YatcInterpreter* interp, const char
 	int* resultCast = malloc(sizeof(int));
 	*(resultCast) = (int)(result);
 	lastData = yatc_variable_create("", YInteger, resultCast, interp->scope);
+      } else if (strcmp(firstCommand, "info") == 0) {
+	if (yatc_csarray_length(lineReallySplit) < 2)
+	  return yatc_interpreter_makeAnException(i, "Please specify the type of information that you would like to retreive.");
+	char* what = lineReallySplit[1];
+	char* info = calloc(256, sizeof(char));
+	if (strcmp(what, "version") == 0 || strcmp(what, "patchlevel") == 0)
+	  strcpy(info, YATC_VERSION);
+	else if (strcmp(what, "os") == 0)
+	  strcpy(info, yatc_lowlevel_get_os());
+	else if (strcmp(what, "pwd") == 0)
+	  getcwd(info, 256);
+	else if (strcmp(what, "time") == 0) {
+	  time_t thisTime = time(NULL);
+	  char* stringifiedTime = ctime(&thisTime);
+	  stringifiedTime[strlen(stringifiedTime) - 1] = '\0';
+	  strcpy(info, stringifiedTime);
+	  free(stringifiedTime);
+	} else if (strcmp(what, "mode") == 0)
+	  strcpy(info, yatc_io_streamsImplementation());
+	else
+	  return yatc_interpreter_makeAnException(i, "Unknown parameter specified to info.");
+	lastData = yatc_variable_create("", YString, info, interp->scope);
       } else if (strcmp(firstCommand, "sub") == 0) {
 	if (yatc_csarray_length(lineReallySplit) < 2)
 	  return yatc_interpreter_makeAnException(i, "Please specify the name and the algorithm of the subroutine that you're about to implement.");

@@ -6,6 +6,7 @@
 #include <string.h>
 
 #define YATC_STRING_MINALLOC 256
+#define YATC_VERSION "0.2"
 
 enum YatcCommonType_e { YInteger = 0, YString = 1, YVector = 2, YSubroutine = 3, YSomething = 4 };
 typedef enum YatcCommonType_e YatcCommonType;

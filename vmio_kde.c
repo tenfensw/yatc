@@ -30,6 +30,9 @@ void yatc_io_kdialogOutput(const char* text, const char* dlgPreferrence) {
   free(cmd);
 }
 
+const char* yatc_io_streamsImplementation() {
+  return "kde4";
+}
 
 void yatc_io_simplestOutput(const char* text) {
   yatc_io_kdialogOutput(text, "msgbox");

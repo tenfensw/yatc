@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include "cext.h"
 #include "vmcommon.h"
 #include "vmexpr.h"
