@@ -3,13 +3,13 @@ rm -vf libyatc.a *.o yatc
 export CFLAGS="-g -std=c99 -Wall -Wextra $*"
 iofile=vmio_cli.c
 test "$KDE" != "" && iofile=vmio_kde.c
-for file in cext.c vmcommon.c vmio.c $iofile vmcore.c tinyexpr/tinyexpr.c vmexpr.c
+for file in cext.c vmcommon.c vmio.c $iofile vmcore.c tinyexpr/tinyexpr.c vmexpr.c vmdl.c
 do
 	printf '\t%s\t%s\n' cc $file
-	cc -c $CFLAGS -I. -Itinyexpr -o `basename $file .c`.o $file || exit 3
+	cc -c $CFLAGS -I. -Itinyexpr -DYATC_NODL -fPIC -o `basename $file .c`.o $file || exit 3
 done
 ar crs libyatc.a *.o || exit 1
-for testn in test01-splitstring test02-upperlowerreverse test03-variablecontext
+for testn in test01-splitstring test02-upperlowerreverse test03-variablecontext test04-expr
 do
 	rm -f tests/$testn.bin
 	printf '\t%s\t%s\n' ld $testn

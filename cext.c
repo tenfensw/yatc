@@ -124,7 +124,7 @@ char** yatc_cstring_split(const char* orig, const char token) {
       insideBrackets += 1;
       if (current == '}')
 	insideBrackets -= 2;
-      if (insideBrackets == 1 || insideBrackets == 0)
+      if ((insideBrackets == 1 && current == '{') || insideBrackets == 0)
 	index += 1;
       else
 	where[strlen(where)] = current;

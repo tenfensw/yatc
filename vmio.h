@@ -1,3 +1,11 @@
+//
+// Yatc - Yet Another Tcl Clone
+// An embeddable modern scripting language with Tcl-like syntax
+// Copyright (C) Tim K/RoverAMD 2019 <timprogrammer@rambler.ru>.
+// 
+// vmio.h - Prototypes of input-output-related functions
+//
+
 #ifndef YATC_VMIO
 #define YATC_VMIO
 

@@ -25,10 +25,19 @@ unsigned yatc_csarray_has(char** array, const char* what);
 char** yatc_csarray_part(char** array, unsigned start, unsigned end);
 const char* yatc_lowlevel_get_os();
 
+#ifdef YATC_DEBUG
+#define dbgprintf(what, ...) fprintf(stderr, what, __VA_ARGS__)
+#define yatc_csarray_dbgprintf(array) yatc_csarray_fprintf(stdout, array)
+#else
+#define dbgprintf(what, ...) (void)(what)
+#define yatc_csarray_dbgprintf(array) (void)(array)
+#endif
+
 #define yatc_csarray_printf(array) yatc_csarray_fprintf(stdout, array)
 #define yatc_array_append(thearray, itslength, what, reallocation) { \
 					      thearray[itslength] = what; \
 					      itslength += 1; \
 					      what = reallocation; }
+
 
 #endif
