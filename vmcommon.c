@@ -16,7 +16,6 @@ struct YatcVariable_s {
   unsigned constant;
   unsigned scope;
 };
-typedef struct YatcVariable_s YatcVariable;
 
 YatcVariable* yatc_variable_create(const char* name, YatcCommonType type, void* mem, unsigned scope) {
   if (!name)

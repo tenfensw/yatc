@@ -21,7 +21,6 @@ struct YatcInterpreter_s {
   unsigned supportSubst;
   YatcImportedCSymbol** dlContext;
 };
-typedef struct YatcInterpreter_s YatcInterpreter;
 
 #define yatc_interpreter_makeAnException(v1, v2) yatc_interpreter_makeAnException_(v1, v2, line, __FILE__, __LINE__)
 
