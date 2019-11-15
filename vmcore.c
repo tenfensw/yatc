@@ -434,7 +434,7 @@ YatcInterpreterResult* yatc_interpreter_exec_(YatcInterpreter* interp, const cha
 	  return yatc_interpreter_makeAnException(i, "Please specify the name and the algorithm of the subroutine that you're about to implement.");
 	char* name = lineReallySplit[1];
 	char* code = lineReallySplit[2];
-	if (yatc_context_get_subr(interp->context, line))
+	if (yatc_context_get_subr(interp->context, line) || name[0] == '^')
 	  return yatc_interpreter_makeAnException(i, "Subroutine with the same name already exists.");
 	char* codeCloned = calloc(strlen(code) + 1, sizeof(char));
 	strcpy(codeCloned, code);
@@ -573,6 +573,22 @@ YatcInterpreterResult* yatc_interpreter_exec_(YatcInterpreter* interp, const cha
 	  strcat(mem, lineReallySplit[b]);
 	  strcat(mem, "\r");
 	}
+      } else if (strlen(firstCommand) >= 2 && firstCommand[0] == '^') {
+	if (yatc_csarray_length(lineReallySplit) < 2)
+	  return yatc_interpreter_makeAnException(i, "Please specify what would you like to append to the specified stream.");
+	char* realN = (firstCommand + 1);
+	if (strcmp(realN, "stdout") == 0)
+	  printf("%s", lineReallySplit[1]);
+	else if (strcmp(realN, "stderr") == 0)
+	  fprintf(stderr, "%s", lineReallySplit[1]);
+	else {
+	  if (!yatc_io_fileExists(realN))
+	    return yatc_interpreter_makeAnException(i, "The specified stream's file representation does not exist.");
+	  char* buf = yatc_io_readAll(realN);
+	  strcat(buf, lineReallySplit[1]);
+	  yatc_io_fileOutput(realN, buf);
+	  free(buf);
+	}
       } else if (strcmp(firstCommand, "index") == 0) {
 	if (yatc_csarray_length(lineReallySplit) < 3)
 	  return yatc_interpreter_makeAnException(i, "Please specify the variable as well as the position of data that you want to retreive.");
@@ -686,6 +702,33 @@ YatcInterpreterResult* yatc_interpreter_exec_(YatcInterpreter* interp, const cha
 	unsigned resultReal = yatc_io_fileExists(lineReallySplit[1]);
 	*(result) = resultReal;
 	lastData = yatc_variable_create("", YInteger, result, interp->scope);
+      } else if (strcmp(firstCommand, "vsearch") == 0) {
+	if (yatc_csarray_length(lineReallySplit) < 2)
+	  return yatc_interpreter_makeAnException(i, "vsearch requires a vector to be specified as well as the item to be found");
+	char* vcRaw = lineReallySplit[1];
+	char* where = lineReallySplit[2];
+	if (!yatc_vector_indeed(vcRaw))
+	  return yatc_interpreter_makeAnException(i, "The specified vector isn't actually a vector");
+	else if (yatc_vector_indeed(where))
+	  return yatc_interpreter_makeAnException(i, "The item that you're looking for can't be a vector.");
+	char** vc = yatc_vector_convert(vcRaw);
+	int* resultIndexMem = malloc(sizeof(int));
+	*resultIndexMem = -1;
+	for (unsigned i = 0; i < yatc_vector_length(vcRaw); i++) {
+	  char* itm = vc[i];
+	  if (itm && strcmp(itm, where) == 0) {
+	    *resultIndexMem = i;
+	    break;
+	  }
+	}
+	lastData = yatc_variable_create("", YInteger, resultIndexMem, interp->scope);
+      } else if (strcmp(firstCommand, "touch") == 0) {
+	if (yatc_csarray_length(lineReallySplit) < 2)
+	  return yatc_interpreter_makeAnException(i, "Please specify the name of the file that you would like to create.");
+	for (unsigned i = 1; i < yatc_csarray_length(lineReallySplit); i++) {
+	  if (!yatc_io_fileExists(lineReallySplit[1]))
+	    yatc_io_fileOutput(lineReallySplit[1], "");
+	}
       } else {
 	dbgprintf("Type casting for '%s'\n", line);
 	int numericValue = atoi(line);
